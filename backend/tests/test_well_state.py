@@ -78,7 +78,7 @@ def test_invalid_units_ranges():
             cycle_number=0,
             phase=Phase.INJECTION,
             days_in_phase=0,
-            reservoir_temperature_c=300.0,  # invalid (>200)
+            reservoir_temperature_c=450.0,  # invalid (>370, physically impossible steam temp)
             base_reservoir_temperature_c=150.0,
             reservoir_pressure_bar=30.0,
             steam_rate_tpd=1000.0,
