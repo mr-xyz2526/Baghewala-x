@@ -1,12 +1,18 @@
 import os
-from pydantic import BaseSettings, Field
+try:
+    from pydantic_settings import BaseSettings
+    from pydantic import Field
+except ImportError:
+    try:
+        from pydantic import BaseSettings, Field  # type: ignore
+    except ImportError:
+        from pydantic import BaseModel as BaseSettings, Field  # type: ignore
 
 class Settings(BaseSettings):
     """Configuration settings loaded from environment variables or .env file."""
 
-    # Example settings – extend as needed
-    DATABASE_URL: str = Field(default="sqlite:///./app.db", env="DATABASE_URL")
-    DEBUG: bool = Field(default=False, env="DEBUG")
+    DATABASE_URL: str = Field(default=os.getenv("DATABASE_URL", "sqlite:///./app.db"))
+    DEBUG: bool = Field(default=os.getenv("DEBUG", "false").lower() in ("true", "1"))
 
     @classmethod
     def load_env(cls):

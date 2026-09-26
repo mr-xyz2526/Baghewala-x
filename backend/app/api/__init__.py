@@ -1,1 +1,3 @@
-# This file marks the backend/app/api package
+from .router import router
+
+__all__ = ["router"]

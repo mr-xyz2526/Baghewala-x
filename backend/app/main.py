@@ -1,16 +1,17 @@
-import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from .config import Settings
-from .api import router as api_router
+from .api.router import router as api_router
 
-app = FastAPI(title="Baghewala‑X Backend", version="0.1.0")
-
-@app.on_event("startup")
-async def startup_event():
-    # Load settings (e.g., from .env) – placeholder
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load settings on startup
     Settings.load_env()
+    yield
+
+app = FastAPI(title="Baghewala‑X Backend", version="0.1.0", lifespan=lifespan)
 
 @app.get("/health", response_class=JSONResponse)
 async def health():
