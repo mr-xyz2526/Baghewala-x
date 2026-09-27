@@ -1,0 +1,113 @@
+{
+  "validation_badge": "SYNTHETIC-DEMO VALIDATION",
+  "provenance_note": "Validation metrics evaluated strictly on synthetic numerical-wave & analytical dynamometer cards. No real-world field accuracy is asserted or claimed.",
+  "primary_model": {
+    "algorithm": "Support Vector Classifier (SVC)",
+    "kernel": "linear",
+    "cv_accuracy_rbf_mean": 0.9988,
+    "cv_accuracy_linear_mean": 1.0,
+    "test_accuracy": 1.0,
+    "macro_precision": 1.0,
+    "macro_recall": 1.0,
+    "macro_f1": 1.0
+  },
+  "per_class_metrics": {
+    "FLUID_POUND": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 40
+    },
+    "GAS_INTERFERENCE": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 40
+    },
+    "NORMAL": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 40
+    },
+    "PUMP_OFF": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 40
+    },
+    "TRAVELING_VALVE_LEAK": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 40
+    }
+  },
+  "confusion_matrix": [
+    [
+      40,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      40,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      40,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      40,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      40
+    ]
+  ],
+  "secondary_benchmarks": {
+    "random_forest": {
+      "cv_accuracy_mean": 0.9988,
+      "test_accuracy": 1.0,
+      "params": {
+        "n_estimators": 100,
+        "max_depth": 8
+      }
+    },
+    "xgboost": {
+      "test_accuracy": 1.0,
+      "params": {
+        "n_estimators": 80,
+        "max_depth": 4
+      }
+    }
+  },
+  "training_summary": {
+    "total_samples": 1000,
+    "train_samples": 800,
+    "test_samples": 200,
+    "num_classes": 5,
+    "random_seed": 42
+  },
+  "artifact_paths": {
+    "model": "data/models\\card_classifier_svm.joblib",
+    "scaler": "data/models\\scaler.joblib",
+    "feature_config": "data/models\\feature_config.json",
+    "confusion_matrix": "data/models\\confusion_matrix.png"
+  }
+}

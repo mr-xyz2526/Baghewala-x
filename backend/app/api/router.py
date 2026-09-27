@@ -167,6 +167,48 @@ async def srp_dynamometer(req: DynamometerRequest):
         raise HTTPException(status_code=422, detail=str(e))
 
 
+# ── Machine Learning Card Classification ───────────────────────────────────
+
+class CardPredictRequest(BaseModel):
+    card_points: List[List[float]]
+    rod_diameter_in: float = 0.875
+    max_allowable_stress_psi: Optional[float] = 35000.0
+    min_load_warning_lbf: Optional[float] = 800.0
+
+
+@router.post("/ml/predict")
+async def ml_predict_card(req: CardPredictRequest):
+    """Predict downhole card condition with confidence, alternatives, geometric reasons, and stress screening."""
+    try:
+        from ..ml import predict_condition, RodStressConfig
+        s_cfg = RodStressConfig(
+            rod_diameter_in=req.rod_diameter_in,
+            max_allowable_stress_psi=req.max_allowable_stress_psi or 35000.0,
+            min_load_warning_lbf=req.min_load_warning_lbf or 800.0,
+        )
+        points_tuples = [(float(p[0]), float(p[1])) for p in req.card_points]
+        res = predict_condition(
+            card_points=points_tuples,
+            rod_diameter_in=req.rod_diameter_in,
+            stress_config=s_cfg,
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+@router.get("/ml/metrics")
+async def ml_get_metrics():
+    """Return trained classifier performance metrics with SYNTHETIC-DEMO VALIDATION label."""
+    import os, json
+    metrics_path = os.path.join("data", "models", "metrics.json")
+    if not os.path.exists(metrics_path):
+        raise HTTPException(status_code=404, detail="Metrics file not found. Train pipeline first.")
+    with open(metrics_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+
 
 # ── Economics ───────────────────────────────────────────────────────────────
 
