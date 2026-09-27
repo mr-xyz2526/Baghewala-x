@@ -63,3 +63,22 @@ def test_optimizer_endpoint_smoke():
     assert "alternatives_table" in data
     assert "explanation_of_trade_offs" in data
 
+def test_srp_dynamometer_endpoint_smoke():
+    """Verify /api/srp/dynamometer returns surface and downhole cards with loads and power."""
+    payload = {
+        "spm": 6.0,
+        "surface_stroke_in": 72.0,
+        "pump_fillage_pct": 95.0,
+        "card_class": "NORMAL",
+        "prefer_numerical": False,
+    }
+    response = client.post("/api/srp/dynamometer", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["surface_card_points"]) >= 50
+    assert len(data["downhole_card_points"]) >= 50
+    assert len(data["normalized_surface_points"]) == 100
+    assert data["peak_load_lbf"] > data["min_load_lbf"] > 0
+    assert data["card_area_in_lbf"] > 0
+
+

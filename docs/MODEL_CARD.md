@@ -104,6 +104,38 @@ $$\mu(T) = \mu_{ref} \cdot \exp\left( B \cdot s_{sens} \cdot \left[ \frac{1}{T(^
 
 ---
 
+### 3.4 Sucker-Rod Pumping Mechanics: Gibbs 1D Damped-Wave Model
+The sucker rod string is modeled as a continuous flexible elastic transmission line governed by the classic one-dimensional damped wave equation.
+
+`SOURCE: Gibbs, S.G. (1963), 'Predicting the Behavior of Sucker-Rod Pumping Systems', JPT 15(7), pp. 769–778; SPE-588-PA.`
+`SOURCE: Gibbs, S.G. and Neely, A.B. (1966), 'Computer Diagnosis of Down-Hole Conditions in Sucker Rod Pumping Wells', JPT 18(1), pp. 91–98; SPE-1165-PA.`
+
+1. **Governing Wave Equation**:
+   $$\frac{\partial^2 u(x, t)}{\partial t^2} = a^2 \frac{\partial^2 u(x, t)}{\partial x^2} - c \frac{\partial u(x, t)}{\partial t}$$
+   where:
+   - $u(x, t)$: dynamic axial displacement of rod section at depth $x$ and time $t$ [m].
+   - $a = \sqrt{E / \rho}$: acoustic wave velocity in rod steel ($\approx 5,047 \text{ m/s} \approx 16,560 \text{ ft/s}$).
+   - $c$: Gibbs viscous damping factor [$\text{s}^{-1}$], representing fluid drag and internal damping along the rod string.
+
+2. **Surface Boundary Condition ($x = 0$)**:
+   Imposed kinematic motion from surface beam pumping unit:
+   $$u(0, t) = \frac{S}{2} (1 - \cos(\omega t))$$
+   where $S$ is polished rod stroke length, $\omega = \frac{2 \pi \cdot \text{SPM}}{60}$.
+   Surface polished rod load (PRL):
+   $$F_{surface}(t) = W_{rod, fluid} + E A \frac{\partial u}{\partial x}(0, t) + F_{friction}(t)$$
+
+3. **Downhole Pump Boundary Condition ($x = L$)**:
+   Relates rod tension at the bottom of the string to plunger resistance force:
+   $$E A \frac{\partial u}{\partial x}(L, t) = - F_{pump}(u(L, t), \dot{u}(L, t))$$
+   The boundary load $F_{pump}$ is governed by traveling valve and standing valve states, fluid fillage, and gas presence.
+
+4. **Numerical Discretization**:
+   Solved via second-order explicit central finite differences under strict Courant-Friedrichs-Lewy stability:
+   $$C = \frac{a \Delta t}{\Delta x} \le 0.95 < 1.0$$
+   A ghost-node formulation handles the downhole force boundary. A lightweight analytical harmonic fallback is automatically engaged if numerical instability is detected.
+
+---
+
 ## 4. Key Assumptions & Boundary Conditions
 1. Uniform cylindrical heated zone around vertical wellbore.
 2. Homogeneous, isotropic thermal conductivity and volumetric heat capacities.
@@ -111,3 +143,22 @@ $$\mu(T) = \mu_{ref} \cdot \exp\left( B \cdot s_{sens} \cdot \left[ \frac{1}{T(^
 4. Single-phase Darcy inflow approximation for composite inner heated / outer cold zones.
 5. Latent heat completely released inside the heated volume.
 6. Zero fluid production during shut-in soak phase ($q = 0$).
+7. Sucker rod transmission line assumes uniform single-taper steel rod string (multi-taper API strings represented by equivalent acoustic impedance).
+
+---
+
+## 5. Dynamometer Card Taxonomy & Relationship Note
+In petroleum production literature, dynamometer card taxonomies vary substantially:
+- **Lufkin / Nabla Classic Catalog**: Catalogs 16+ specific downhole patterns including unanchored tubing, delayed traveling valve closing, parted rods, gas lock, split barrel, bent pump barrel, fluid pound, and stuffing-box friction.
+- **API Specification 11L**: Focuses on design calculation tables and polished rod load limits.
+- **Gibbs & Neely (1966)**: Categorizes downhole pump operation into full pump, gas interference, fluid pound, traveling valve leak, and standing valve leak.
+
+For **BAGHEWALA-X**, we implement **five prototype classes** representing the predominant thermal heavy-oil artificial lift states:
+1. `NORMAL`: Full liquid fillage (88–100%), clean rectangular downhole card, classic surface loop.
+2. `GAS_INTERFERENCE`: Free gas in pump chamber; cushioned downstroke compression curve and rod-floating risk.
+3. `FLUID_POUND`: Partial liquid fillage (35–75%); traveling valve hits liquid abruptly on downstroke, launching high-frequency acoustic shock waves.
+4. `TRAVELING_VALVE_LEAK`: Fluid slippage through traveling valve on upstroke; decaying load line.
+5. `PUMP_OFF`: Severe reservoir depletion (< 22% fillage); collapsed card area, minimal work.
+
+These five classes serve as our operational prototypes for system development and do **not** claim to represent the sole or exhaustive industry taxonomy.
+

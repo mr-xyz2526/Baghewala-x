@@ -119,6 +119,55 @@ async def srp_compute(req: SRPRequest):
         raise HTTPException(status_code=422, detail=str(e))
 
 
+class DynamometerRequest(BaseModel):
+    spm: float = 6.0
+    surface_stroke_in: float = 72.0
+    pump_fillage_pct: float = 90.0
+    card_class: str = "NORMAL"
+    rod_length_m: float = 600.0
+    rod_diameter_in: float = 0.875
+    plunger_diameter_in: float = 2.0
+    damping_factor_s_inv: float = 0.8
+    prefer_numerical: bool = True
+
+
+@router.post("/srp/dynamometer")
+async def srp_dynamometer(req: DynamometerRequest):
+    """Generate surface and downhole dynamometer cards using Gibbs 1D wave solver with fallback."""
+    try:
+        from ..srp_engine import (
+            RodStringParams,
+            PumpParams,
+            OperatingState,
+            CardClass,
+            generate_dynamometer_card,
+        )
+        r_params = RodStringParams(
+            length_m=req.rod_length_m,
+            diameter_in=req.rod_diameter_in,
+            damping_factor_s_inv=req.damping_factor_s_inv,
+        )
+        p_params = PumpParams(
+            plunger_diameter_in=req.plunger_diameter_in,
+        )
+        op_state = OperatingState(
+            spm=req.spm,
+            surface_stroke_in=req.surface_stroke_in,
+            pump_fillage_pct=req.pump_fillage_pct,
+            card_class=CardClass(req.card_class),
+        )
+        card = generate_dynamometer_card(
+            rod_params=r_params,
+            pump_params=p_params,
+            operating_state=op_state,
+            prefer_numerical=req.prefer_numerical,
+        )
+        return card.to_dict()
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+
 # ── Economics ───────────────────────────────────────────────────────────────
 
 class EconomicsRequest(BaseModel):
