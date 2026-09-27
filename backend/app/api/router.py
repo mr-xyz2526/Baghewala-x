@@ -208,9 +208,56 @@ async def ml_get_metrics():
         return json.load(f)
 
 
+# ── Hydraulics & Pressure Drop ─────────────────────────────────────────────
+
+class HydraulicsRequest(BaseModel):
+    oil_rate_bopd: float = 200.0
+    water_cut_pct: Optional[float] = 0.0
+    gas_rate_mscfd: Optional[float] = 0.0
+    viscosity_cp: Optional[float] = 1200.0
+    density_kg_m3: Optional[float] = 960.0
+    depth_m: Optional[float] = 600.0
+    tubing_id_in: Optional[float] = 2.441
+    choke_opening_pct: float = 100.0
+    wellhead_pressure_bar: Optional[float] = 5.0
+    pump_intake_pressure_bar: Optional[float] = None
+
+
+@router.post("/hydraulics/compute")
+async def hydraulics_compute(req: HydraulicsRequest):
+    """Compute wellbore and surface pressure profile, friction/hydrostatic drops, and choke Delta-P."""
+    try:
+        from ..hydraulics import HydraulicsEngine, WellboreGeometry, HydraulicsFluidProperties
+        geom = WellboreGeometry(
+            depth_m=req.depth_m or 600.0,
+            tubing_id_in=req.tubing_id_in or 2.441,
+        )
+        fluid = HydraulicsFluidProperties(
+            oil_density_kg_m3=req.density_kg_m3 or 960.0,
+            oil_viscosity_cp=req.viscosity_cp or 1200.0,
+        )
+        engine = HydraulicsEngine(geometry=geom, fluid_properties=fluid)
+        res = engine.calculate_pressures(
+            oil_rate_bopd=req.oil_rate_bopd,
+            water_cut_pct=req.water_cut_pct,
+            gas_rate_mscfd=req.gas_rate_mscfd,
+            oil_viscosity_cp=req.viscosity_cp,
+            oil_density_kg_m3=req.density_kg_m3,
+            depth_m=req.depth_m,
+            tubing_id_in=req.tubing_id_in,
+            choke_opening_pct=req.choke_opening_pct,
+            wellhead_pressure_bar=req.wellhead_pressure_bar,
+            pump_intake_pressure_bar=req.pump_intake_pressure_bar,
+        )
+        return res.to_dict()
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Economics ───────────────────────────────────────────────────────────────
+
 
 class EconomicsRequest(BaseModel):
     oil_price_usd_bbl: float = 60.0

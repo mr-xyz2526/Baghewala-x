@@ -81,4 +81,26 @@ def test_srp_dynamometer_endpoint_smoke():
     assert data["peak_load_lbf"] > data["min_load_lbf"] > 0
     assert data["card_area_in_lbf"] > 0
 
+def test_hydraulics_endpoint_smoke():
+    """Verify /api/hydraulics/compute calculates wellbore and surface pressure profile."""
+    payload = {
+        "oil_rate_bopd": 250.0,
+        "water_cut_pct": 20.0,
+        "gas_rate_mscfd": 30.0,
+        "viscosity_cp": 800.0,
+        "density_kg_m3": 950.0,
+        "depth_m": 550.0,
+        "choke_opening_pct": 80.0,
+        "wellhead_pressure_bar": 5.0,
+    }
+    response = client.post("/api/hydraulics/compute", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["pump_intake_pressure_bar"] > data["wellhead_pressure_bar"]
+    assert data["pressure_drop_components"]["hydrostatic_bar"] > 0
+    assert data["pressure_drop_components"]["friction_bar"] > 0
+    assert data["choke_pressure_drop_bar"] > 0
+    assert "BEGGS_BRILL" in data["model_type"]
+
+
 
