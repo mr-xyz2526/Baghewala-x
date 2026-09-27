@@ -10,6 +10,7 @@ from ..economics import EconomicsEngine, EconomicsConfig
 from ..risk import RiskEngine
 from ..twin import TwinOrchestrator, TwinRunParams
 from ..services.twin_state_store import TwinStateStore
+from ..optimization import CSSOptimizer, OptimizationBounds, SelectionRuleConfig
 
 router = APIRouter()
 
@@ -250,3 +251,31 @@ async def reset_well(well_id: str):
     """Reset a well to its demo baseline state."""
     state = _store.reset_demo_state(well_id)
     return state.model_dump()
+
+
+# ── CSS Optimizer ───────────────────────────────────────────────────────────
+
+class OptimizerRequest(BaseModel):
+    current_plan: Optional[Dict[str, Any]] = None
+    bounds: Optional[Dict[str, Any]] = None
+    selection_rule: Optional[Dict[str, Any]] = None
+    use_nsga2: bool = True
+    random_seed: Optional[int] = 42
+
+
+@router.post("/optimizer/optimize")
+async def optimize_css(req: OptimizerRequest):
+    """Run multi-objective optimization (Pareto front, trade-offs, compromise selection)."""
+    try:
+        bounds_obj = OptimizationBounds(**req.bounds) if req.bounds else OptimizationBounds()
+        rule_obj = SelectionRuleConfig(**req.selection_rule) if req.selection_rule else SelectionRuleConfig()
+        opt = CSSOptimizer(bounds=bounds_obj, random_seed=req.random_seed)
+        res = opt.optimize(
+            current_plan_params=req.current_plan,
+            selection_rule=rule_obj,
+            use_nsga2=req.use_nsga2,
+        )
+        return res.to_dict()
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+

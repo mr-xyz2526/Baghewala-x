@@ -42,3 +42,24 @@ def test_twin_run_smoke():
     assert data["cycle_result"]["cycle_oil"] > 0
     assert data["cycle_result"]["SOR"] > 0
     assert data["economics"]["net_cash_flow_usd"] is not None
+
+def test_optimizer_endpoint_smoke():
+    """Verify the /api/optimizer/optimize endpoint executes and returns Pareto candidates and selected plan."""
+    payload = {
+        "current_plan": {
+            "steam_rate_tpd": 800.0,
+            "steam_pressure_bar": 45.0,
+            "injection_days": 15,
+            "soak_days": 4,
+            "production_days": 60,
+        },
+        "use_nsga2": False,  # fast execution
+    }
+    response = client.post("/api/optimizer/optimize", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["pareto_candidates"]) >= 1
+    assert "selected_plan" in data
+    assert "alternatives_table" in data
+    assert "explanation_of_trade_offs" in data
+

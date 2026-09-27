@@ -1,5 +1,11 @@
 import axios from 'axios'
-import type { TwinRunRequest, TwinRunResult, CycleResult } from '../types'
+import type {
+  TwinRunRequest,
+  TwinRunResult,
+  CycleResult,
+  OptimizerRequest,
+  OptimizationResult,
+} from '../types'
 
 const BASE = '/api'
 
@@ -25,5 +31,10 @@ export const api = {
   risk: {
     score: (params: Record<string, number>) =>
       axios.post(`${BASE}/risk/score`, params).then(r => r.data),
+  },
+
+  optimizer: {
+    optimize: (req: OptimizerRequest): Promise<OptimizationResult> =>
+      axios.post(`${BASE}/optimizer/optimize`, req).then(r => r.data),
   },
 }

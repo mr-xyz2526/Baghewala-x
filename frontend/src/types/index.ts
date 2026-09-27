@@ -100,3 +100,76 @@ export interface TwinRunRequest {
   oil_price_usd_bbl?: number
   steam_cost_usd_tonne?: number
 }
+
+// ── Optimization Types ────────────────────────────────────────────────────────
+
+export interface CandidatePlan {
+  plan_id: string
+  steam_rate_tpd: number
+  steam_pressure_bar: number
+  steam_temp_c: number
+  injection_days: number
+  soak_days: number
+  production_days: number
+  cumulative_oil_bbl: number
+  sor_t_per_bbl: number
+  cumulative_steam_t: number
+  heated_radius_m: number
+  thermal_efficiency: number
+  final_oil_rate_bopd: number
+  is_feasible: boolean
+  constraint_violations: string[]
+  pareto_rank: number
+  crowding_distance: number
+}
+
+export interface AlternativePlanRow {
+  strategy: string
+  plan_id: string
+  steam_rate_tpd: number
+  steam_pressure_bar: number
+  injection_days: number
+  soak_days: number
+  production_days: number
+  cumulative_oil_bbl: number
+  sor_t_per_bbl: number
+  cumulative_steam_t: number
+  heated_radius_m: number
+  oil_delta_vs_current_bbl: number
+  sor_delta_vs_current: number
+  steam_delta_vs_current_t: number
+}
+
+export interface OptimizationResult {
+  pareto_candidates: CandidatePlan[]
+  current_plan: CandidatePlan
+  selected_plan: CandidatePlan
+  selection_rule_description: string
+  objective_values: {
+    current_plan: Record<string, number>
+    selected_plan: Record<string, number>
+    pareto_front_size: number
+  }
+  constraints_summary: {
+    total_evaluated: number
+    feasible_candidates: number
+    infeasible_candidates: number
+    feasibility_rate_pct: number
+  }
+  alternatives_table: AlternativePlanRow[]
+  explanation_of_trade_offs: string
+  all_evaluated_candidates: CandidatePlan[]
+}
+
+export interface OptimizerRequest {
+  current_plan?: Partial<CandidatePlan>
+  bounds?: Record<string, number>
+  selection_rule?: {
+    rule_name: string
+    weight_oil: number
+    weight_sor: number
+    weight_steam: number
+  }
+  use_nsga2?: boolean
+  random_seed?: number
+}
