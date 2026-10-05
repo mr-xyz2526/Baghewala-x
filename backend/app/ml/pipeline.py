@@ -23,9 +23,15 @@ from sklearn.metrics import (
     classification_report,
 )
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+try:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except ImportError:
+    matplotlib = None
+    plt = None
+    HAS_MATPLOTLIB = False
 
 from .features import (
     extract_card_features,
@@ -207,34 +213,35 @@ class CardClassifier:
             benchmark_results["xgboost"] = {"status": f"skipped: {str(e)}"}
 
         # 7. Render and Save Confusion Matrix Plot
-        fig, ax = plt.subplots(figsize=(7, 6))
-        im = ax.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
-        ax.figure.colorbar(im, ax=ax)
-        ax.set(
-            xticks=np.arange(cm.shape[1]),
-            yticks=np.arange(cm.shape[0]),
-            xticklabels=unique_classes,
-            yticklabels=unique_classes,
-            title="Confusion Matrix: Card Classifier\n[SYNTHETIC-DEMO VALIDATION]",
-            ylabel="True Prototype Class",
-            xlabel="Predicted Class",
-        )
-        plt.setp(ax.get_xticklabels(), rotation=35, ha="right", rotation_mode="anchor")
+        if HAS_MATPLOTLIB and plt is not None:
+            fig, ax = plt.subplots(figsize=(7, 6))
+            im = ax.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
+            ax.figure.colorbar(im, ax=ax)
+            ax.set(
+                xticks=np.arange(cm.shape[1]),
+                yticks=np.arange(cm.shape[0]),
+                xticklabels=unique_classes,
+                yticklabels=unique_classes,
+                title="Confusion Matrix: Card Classifier\n[SYNTHETIC-DEMO VALIDATION]",
+                ylabel="True Prototype Class",
+                xlabel="Predicted Class",
+            )
+            plt.setp(ax.get_xticklabels(), rotation=35, ha="right", rotation_mode="anchor")
 
-        # Loop over data dimensions and create text annotations
-        thresh = cm.max() / 2.0
-        for r in range(cm.shape[0]):
-            for c in range(cm.shape[1]):
-                ax.text(
-                    c, r, format(cm[r, c], "d"),
-                    ha="center", va="center",
-                    color="white" if cm[r, c] > thresh else "black",
-                    fontweight="bold",
-                )
-        fig.tight_layout()
-        cm_image_path = os.path.join(out_dir, "confusion_matrix.png")
-        fig.savefig(cm_image_path, dpi=180, bbox_inches="tight")
-        plt.close(fig)
+            # Loop over data dimensions and create text annotations
+            thresh = cm.max() / 2.0
+            for r in range(cm.shape[0]):
+                for c in range(cm.shape[1]):
+                    ax.text(
+                        c, r, format(cm[r, c], "d"),
+                        ha="center", va="center",
+                        color="white" if cm[r, c] > thresh else "black",
+                        fontweight="bold",
+                    )
+            fig.tight_layout()
+            cm_image_path = os.path.join(out_dir, "confusion_matrix.png")
+            fig.savefig(cm_image_path, dpi=180, bbox_inches="tight")
+            plt.close(fig)
 
         # 8. Save Artifacts
         model_save_path = os.path.join(out_dir, "card_classifier_svm.joblib")

@@ -1,7 +1,10 @@
 // Central TypeScript types mirroring backend Pydantic models
+// Extended for BAGHEWALA-X industrial UI
 
 export type Phase = 'INJECTION' | 'SOAKING' | 'PRODUCTION'
 export type Mode = 'SIMULATED_DEMO' | 'HISTORICAL' | 'FIELD_VALIDATED'
+export type CardClass = 'NORMAL' | 'FLUID_POUND' | 'ROD_FLOATING' | 'GAS_LOCK' | 'TUBING_LEAK' | 'VISCOUS_DRAG'
+export type RiskLevel = 'NORMAL' | 'WARNING' | 'HIGH' | 'CRITICAL'
 
 export interface CycleTimelineRecord {
   day: number
@@ -42,6 +45,8 @@ export interface Economics {
   total_steam_t: number
   sor_t_per_bbl: number
   gross_revenue_usd: number
+  total_steam_cost_usd: number
+  total_opex_usd: number
   net_cash_flow_usd: number
   npv_usd: number
   payout_day: number | null
@@ -172,4 +177,79 @@ export interface OptimizerRequest {
   }
   use_nsga2?: boolean
   random_seed?: number
+}
+
+// ── Dynamometer Card ──────────────────────────────────────────────────────────
+
+export interface DynamometerCard {
+  card_class: CardClass
+  surface_card: [number, number][]  // [position_in, load_lbf]
+  downhole_card: [number, number][]
+  peak_load_lbf: number
+  min_load_lbf: number
+  stroke_in: number
+  pump_fillage_pct: number
+  solver_used: string
+}
+
+// ── Risk Request ──────────────────────────────────────────────────────────────
+
+export interface RiskRequest {
+  pump_fillage_pct: number
+  peak_rod_load_lbf: number
+  min_rod_load_lbf: number
+  rod_stress_indicator: number
+  motor_power_kw: number
+  oil_rate_bopd: number
+  prev_fillage_pct?: number
+}
+
+// ── Well Meta (for Field screen) ──────────────────────────────────────────────
+
+export interface WellMeta {
+  well_id: string
+  well_name: string
+  status: 'healthy' | 'monitoring' | 'risk' | 'offline'
+  phase: Phase
+  oil_rate_bopd: number
+  temperature_c: number
+  viscosity_cp: number
+  spm: number
+  vfd_hz: number
+  fillage_pct: number
+  sor: number
+  risk_level: RiskLevel
+}
+
+// ── What-If Scenario ──────────────────────────────────────────────────────────
+
+export interface WhatIfScenario {
+  spm: number
+  vfd_hz: number
+  stroke_in: number
+  steam_rate_tpd: number
+  soak_days: number
+}
+
+export interface WhatIfDayResult {
+  day: number
+  temperature_c: number
+  viscosity_cp: number
+  oil_rate_bopd: number
+  sor: number
+  power_kw: number
+  fillage_pct: number
+  rod_load_lbf: number
+  risk_level: RiskLevel
+}
+
+// ── ML Prediction Result ──────────────────────────────────────────────────────
+
+export interface MLPredictResult {
+  condition: CardClass
+  confidence: number
+  alternatives: { condition: CardClass; confidence: number }[]
+  geometric_features: Record<string, number>
+  stress_flags: string[]
+  stress_ok: boolean
 }
